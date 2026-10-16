@@ -28,18 +28,10 @@ jobs:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
-      - name: Verify files
+      - name: Setup gradle wrapper
         working-directory: android/V4-super-aggressive
         run: |
-          echo "=== FILE CHECK ==="
-          ls -la
-          ls -la gradle/wrapper/
-          ls -la app/
-          cat gradle/wrapper/gradle-wrapper.properties
-
-      - name: Download gradle wrapper jar
-        working-directory: android/V4-super-aggressive
-        run: |
+          mkdir -p gradle/wrapper
           curl -sL https://github.com/gradle/gradle/raw/v8.2.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
           curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradlew -o gradlew
           chmod +x gradlew
@@ -52,13 +44,12 @@ jobs:
         with:
           name: SuperSnatcher-V4
           path: android/V4-super-aggressive/app/build/outputs/apk/release/*.apk
-          retention-days: 30
 
       - name: Create Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4-build-${{ github.run_number }}
+          tag_name: v4-fix-${{ github.run_number }}
           files: android/V4-super-aggressive/app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
