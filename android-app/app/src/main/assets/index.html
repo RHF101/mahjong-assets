@@ -2,364 +2,241 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Web Snatcher</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,system-ui,sans-serif}
-body{background:#0a0a0f;color:#fff;min-height:100vh;padding:16px}
+body{background:#0a0a0f;color:#fff;padding:16px;min-height:100vh}
 .container{max-width:700px;margin:0 auto}
-h1{color:#4ade80;font-size:22px;margin-bottom:4px}
+h1{color:#4ade80;font-size:22px}
 .sub{color:#888;font-size:12px;margin-bottom:16px}
 .card{background:#13131f;border:1px solid #2a1f4a;border-radius:12px;padding:16px;margin-bottom:16px}
-.input{width:100%;padding:12px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;color:#fff;font-size:14px;margin-bottom:8px;font-family:monospace}
+.input{width:100%;padding:14px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;color:#fff;font-size:14px;margin-bottom:10px;font-family:monospace}
 .btn{width:100%;padding:14px;background:#4ade80;border:none;border-radius:8px;color:#0a0a0f;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:8px}
 .btn:active{opacity:.8}
 .btn-sec{background:#2a1f4a;color:#4ade80}
 .btn-danger{background:#e74c3c;color:#fff}
-.row{display:flex;gap:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:8px;margin-top:8px}
 .row .btn{flex:1;margin:0}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.stat{background:#1a1a2e;border-radius:8px;padding:10px;text-align:center}
-.stat .num{font-size:20px;color:#4ade80;font-weight:700}
+.stat{background:#1a1a2e;border-radius:8px;padding:12px;text-align:center}
+.stat .num{font-size:22px;color:#4ade80;font-weight:700}
 .stat .label{font-size:10px;color:#888}
-.log{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.5}
-.log .ok{color:#4ade80}
-.log .err{color:#f87171}
+/* Progress bar */
+.progress-wrap{background:#0a0a0f;border-radius:8px;padding:4px;margin-bottom:12px;position:relative;overflow:hidden}
+.progress-bar{height:28px;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:6px;width:0%;transition:width .3s ease;display:flex;align-items:center;justify-content:center;color:#0a0a0f;font-weight:700;font-size:12px;min-width:40px}
+.progress-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:12px;pointer-events:none;text-shadow:0 0 4px #000}
+/* Status badges */
+.status{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;margin-right:6px}
+.status.ok{background:#4ade80;color:#0a0a0f}
+.status.err{background:#e74c3c;color:#fff}
+.status.run{background:#fbbf24;color:#0a0a0f}
+/* File list */
+.file-list{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;max-height:400px;overflow-y:auto;font-family:monospace;font-size:11px}
+.file-item{padding:8px 12px;border-bottom:1px solid #1a1a2e;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.file-item:last-child{border-bottom:none}
+.file-item .fname{flex:1;word-break:break-all;color:#ccc}
+.file-item .fsize{color:#4ade80;font-weight:700;white-space:nowrap}
+.file-item .fext{padding:2px 5px;background:#2a1f4a;color:#4ade80;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase}
+.log{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.5;margin-top:8px}
 .log .info{color:#60a5fa}
+.log .ok{color:#4ade80}
 .log .warn{color:#fbbf24}
-.toggle{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a1f4a}
-.toggle:last-child{border-bottom:none}
-.toggle label{font-size:13px;color:#ccc}
-.toggle input[type=checkbox]{width:18px;height:18px;accent-color:#4ade80}
+.log .err{color:#f87171}
+.info-box{padding:10px;border-radius:8px;background:#1a2a3d;color:#60a5fa;font-size:11px;margin-bottom:10px;line-height:1.5}
 .hidden{display:none}
-.file-item{padding:6px 10px;background:#1a1a2e;border-radius:6px;margin-bottom:4px;font-size:11px;font-family:monospace;word-break:break-all;display:flex;justify-content:space-between}
-.file-item .size{color:#888;margin-left:8px}
+.tab-row{display:flex;gap:4px;margin-bottom:8px}
+.tab{flex:1;padding:8px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:6px;color:#888;font-size:12px;cursor:pointer;text-align:center}
+.tab.active{background:#2a1f4a;color:#4ade80;border-color:#4ade80}
 </style>
 </head>
 <body>
 <div class="container">
 <h1>Web Snatcher</h1>
-<div class="sub">Duplikat semua file dari web → ZIP</div>
+<div class="sub">Auto-capture asset dari web → ZIP</div>
 
 <div class="card">
-  <input class="input" id="url" placeholder="https://example.com" autocomplete="off">
-  <input class="input" id="ref" placeholder="Referer (opsional)" autocomplete="off">
-  <div class="row" style="margin-bottom:8px">
-    <button class="btn btn-sec" style="margin:0" onclick="toggleOptions()">⚙ Opsi</button>
-    <button class="btn" style="margin:0" onclick="start()">▶ SNATCH</button>
-  </div>
-</div>
-
-<div id="optionsCard" class="card hidden">
-  <div class="toggle"><label>Download gambar</label><input type="checkbox" id="optImg" checked></div>
-  <div class="toggle"><label>Download JS/CSS</label><input type="checkbox" id="optJs" checked></div>
-  <div class="toggle"><label>Download audio/video</label><input type="checkbox" id="optMedia" checked></div>
-  <div class="toggle"><label>Download fonts</label><input type="checkbox" id="optFont" checked></div>
-  <div class="toggle"><label>Follow JS imports</label><input type="checkbox" id="optFollow" checked></div>
-  <div class="toggle"><label>Use CORS proxy</label><input type="checkbox" id="optProxy" checked></div>
-  <div class="toggle"><label>Delay per request (ms)</label><input type="number" id="optDelay" value="100" style="width:80px"></div>
-  <div class="toggle"><label>Max files</label><input type="number" id="optMax" value="500" style="width:80px"></div>
+  <input class="input" id="url" placeholder="https://..." autocomplete="off" value="https://public.pg-demo.com/demo/?gi=65&lang=en">
+  <button class="btn" id="openBtn" onclick="openWeb()">▶ Buka Web & Mulai Capture</button>
+  <button class="btn btn-sec" id="zipBtn" onclick="saveZip()" style="display:none">💾 Save ZIP</button>
 </div>
 
 <div class="card">
   <div class="stats">
     <div class="stat"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
-    <div class="stat"><div class="num" id="statSize">0</div><div class="label">MB</div></div>
+    <div class="stat"><div class="num" id="statMB">0.00</div><div class="label">MB</div></div>
   </div>
+  
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="progress-label" id="progressLabel">Idle</div>
+  </div>
+  
   <div class="row">
-    <button class="btn btn-sec" style="margin:0" onclick="clearLog()">🗑 Clear</button>
-    <button class="btn btn-danger" style="margin:0" onclick="stop()">⏸ Stop</button>
+    <button class="btn btn-sec" style="margin:0" onclick="refreshStats()">↻ Refresh</button>
+    <button class="btn btn-danger" style="margin:0" onclick="clearCapture()">🗑 Clear</button>
   </div>
 </div>
 
 <div class="card">
-  <div class="log" id="log"><div class="info">Ready. Input URL, tap SNATCH.</div></div>
-</div>
-
-<div class="card hidden" id="zipCard">
-  <h3 style="color:#4ade80;font-size:14px;margin-bottom:8px">ZIP Ready</h3>
-  <div class="row">
-    <button class="btn" style="margin:0" onclick="downloadZip()">💾 Download ZIP</button>
-    <button class="btn btn-sec" style="margin:0" onclick="uploadGithub()">↑ GitHub</button>
+  <div class="tab-row">
+    <div class="tab active" onclick="switchTab('files', this)">📁 Files (<span id="cntFiles">0</span>)</div>
+    <div class="tab" onclick="switchTab('log', this)">📜 Log</div>
+  </div>
+  
+  <div id="filesTab">
+    <div class="file-list" id="fileList">
+      <div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web" untuk mulai.</div>
+    </div>
+  </div>
+  
+  <div id="logTab" class="hidden">
+    <div class="log" id="log"></div>
   </div>
 </div>
 
 </div>
 
 <script>
-let files = [];
-let stopped = false;
-let totalBytes = 0;
-
 const $ = id => document.getElementById(id);
+let captureStarted = false;
+let captureTimer = null;
+let lastCount = 0;
 
-function log(msg, cls='info') {
+function log(msg, cls) {
   const el = document.createElement('div');
-  el.className = cls;
-  el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  if (cls) el.className = cls;
+  el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
   $('log').appendChild(el);
   $('log').scrollTop = $('log').scrollHeight;
 }
 
-function clearLog() { $('log').innerHTML = ''; }
-function toggleOptions() { $('optionsCard').classList.toggle('hidden'); }
-function stop() { stopped = true; log('Stopping...', 'warn'); }
-
-function updateStats() {
-  $('statFiles').textContent = files.length;
-  $('statSize').textContent = (totalBytes / 1024 / 1024).toFixed(2);
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  $('filesTab').classList.toggle('hidden', name !== 'files');
+  $('logTab').classList.toggle('hidden', name !== 'log');
 }
 
-function b64ToBytes(b64) {
-  const bin = atob(b64);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return arr;
+function setProgress(pct, label) {
+  $('progressBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+  $('progressLabel').textContent = label || (pct.toFixed(0) + '%');
 }
 
-async function fetchWithProxy(url, ref) {
-  const useProxy = $('optProxy').checked;
-  const headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9'
-  };
-  if (ref) headers['Referer'] = ref;
-
-  // Coba direct dulu kalau proxy dimatiin
-  if (!useProxy) {
-    try {
-      const r = await fetch(url, { headers, mode: 'cors' });
-      if (r.ok) {
-        const buf = await r.arrayBuffer();
-        return new Uint8Array(buf);
-      }
-    } catch(e) {}
-  }
-
-  // Multi-proxy fallback
-  const proxies = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.org/?',
-    'https://thingproxy.freeboard.io/fetch/',
-    'https://api.codetabs.com/v1/proxy?quest='
-  ];
-
-  let lastErr = null;
-  for (const proxy of proxies) {
-    try {
-      let target;
-      if (proxy.endsWith('=') || proxy.endsWith('?')) {
-        target = proxy + encodeURIComponent(url);
-      } else {
-        target = proxy + url;
-      }
-      const r = await fetch(target, { headers });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const buf = await r.arrayBuffer();
-      // Cek kalau response body nggak kosong
-      if (buf.byteLength === 0) throw new Error('empty');
-      return new Uint8Array(buf);
-    } catch(e) {
-      lastErr = e;
-    }
-  }
-
-  throw lastErr || new Error('All proxies failed');
-}
-
-function extractUrls(baseUrl, html) {
-  const found = new Set();
-  const base = new URL(baseUrl);
-  
-  // HTML tags
-  const tagRegex = /(?:src|href|data-src|data-href|poster)\s*=\s*["']([^"']+)["']/gi;
-  let m;
-  while ((m = tagRegex.exec(html))) {
-    try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
-  }
-  
-  // CSS url()
-  const cssRegex = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
-  while ((m = cssRegex.exec(html))) {
-    if (m[1].startsWith('data:')) continue;
-    try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
-  }
-  
-  // JS imports
-  if ($('optFollow').checked) {
-    const impRegex = /(?:import|require|fetch|XMLHttpRequest\.open)\s*\(\s*["']([^"']+)["']/gi;
-    while ((m = impRegex.exec(html))) {
-      try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
-    }
-    // Absolute URLs in JS
-    const absRegex = /["'](https?:\/\/[^"'\s<>]+)["']/gi;
-    while ((m = absRegex.exec(html))) {
-      found.add(m[1]);
-    }
-  }
-  
-  return found;
-}
-
-function isWanted(url) {
-  const u = url.toLowerCase();
-  if ($('optImg').checked && /\.(png|jpg|jpeg|gif|webp|svg|ico|bmp)$/.test(u)) return true;
-  if ($('optJs').checked && /\.(js|mjs|cjs|css|json|map)$/.test(u)) return true;
-  if ($('optMedia').checked && /\.(mp3|ogg|wav|m4a|mp4|webm|mov)$/.test(u)) return true;
-  if ($('optFont').checked && /\.(ttf|woff|woff2|otf|eot)$/.test(u)) return true;
-  // HTML sendiri
-  if (/\.(html|htm)$/.test(u) || !/\.\w{2,5}($|\?)/.test(u)) return true;
-  return false;
-}
-
-function getFilename(url) {
-  const u = new URL(url);
-  const path = u.pathname.split('/').filter(Boolean);
-  if (path.length === 0) return 'index.html';
-  return path[path.length - 1].split('?')[0] || 'index.html';
-}
-
-async function processUrl(url, ref, depth = 0) {
-  if (stopped) return;
-  if (files.find(f => f.url === url)) return;
-  const max = parseInt($('optMax').value) || 500;
-  if (files.length >= max) { stopped = true; return; }
-  
-  const delay = parseInt($('optDelay').value) || 100;
-  await new Promise(r => setTimeout(r, delay));
-  if (stopped) return;
-  
-  log('Fetch: ' + url.substring(0, 100), 'info');
-  
-  try {
-    const bytes = await fetchWithProxy(url, ref);
-    const filename = getFilename(url);
-    
-    files.push({ url, filename, data: bytes });
-    totalBytes += bytes.length;
-    updateStats();
-    log('OK ' + filename + ' (' + (bytes.length/1024).toFixed(1) + ' KB)', 'ok');
-    
-    // Kalau HTML/JS — parse lebih dalam
-    if ((filename.endsWith('.html') || filename.endsWith('.js') || filename.endsWith('.css')) && depth < 2) {
-      const text = new TextDecoder().decode(bytes);
-      const subUrls = extractUrls(url, text);
-      const toProcess = [...subUrls].filter(u => isWanted(u) && !files.find(f => f.url === u));
-      log('  Found ' + toProcess.length + ' sub-URLs', 'info');
-      for (const sub of toProcess.slice(0, 100)) {
-        await processUrl(sub, url, depth + 1);
-      }
-    }
-  } catch (e) {
-    log('ERR ' + url.substring(0, 80) + ': ' + e.message, 'err');
-  }
-}
-
-async function start() {
+function openWeb() {
   const url = $('url').value.trim();
-  const ref = $('ref').value.trim();
-  if (!url) { log('URL kosong', 'err'); return; }
+  if (!url) return;
+  log('Membuka: ' + url, 'info');
+  setProgress(0, 'Loading...');
+  $('openBtn').disabled = true;
+  $('openBtn').textContent = '⏳ Capturing...';
+  $('zipBtn').style.display = 'none';
   
-  clearLog();
-  files = [];
-  totalBytes = 0;
-  stopped = false;
-  updateStats();
-  $('zipCard').classList.add('hidden');
-  
-  log('Start: ' + url, 'info');
-  await processUrl(url, ref, 0);
-  
-  if (files.length > 0) {
-    $('zipCard').classList.remove('hidden');
-    log('Selesai. ' + files.length + ' file, ' + (totalBytes/1024/1024).toFixed(2) + ' MB', 'ok');
+  if (window.Android && window.Android.openWeb) {
+    window.Android.openWeb(url);
+    captureStarted = true;
+    // Mulai auto-refresh stats tiap 1 detik
+    let elapsed = 0;
+    captureTimer = setInterval(() => {
+      elapsed++;
+      refreshStats();
+      // Auto-enable ZIP button setelah 10 detik atau kalau ada 5+ file
+      if (lastCount >= 3 || elapsed >= 15) {
+        $('zipBtn').style.display = 'block';
+      }
+    }, 1000);
   } else {
-    log('Nggak ada file ke-download.', 'err');
+    log('ERROR: bridge nggak ada', 'err');
   }
 }
 
-async function downloadZip() {
-  // Pakai JSZip dari CDN
-  log('Creating ZIP...', 'info');
-  if (typeof JSZip === 'undefined') {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-  }
-  const zip = new JSZip();
+// Dipanggil dari Java saat ada file captured
+window.onCapture = function(count, bytes, name) {
+  $('statFiles').textContent = count;
+  $('statMB').textContent = (bytes / 1024 / 1024).toFixed(2);
+  $('cntFiles').textContent = count;
+  lastCount = count;
   
-  for (const f of files) {
-    let path = f.filename;
+  // Animasi progress (pseudo — nggak ada total)
+  const pct = Math.min(95, Math.log(count + 1) * 20);
+  setProgress(pct, count + ' files');
+  
+  const ext = name.split('.').pop().toUpperCase();
+  const sizeKB = (bytes / 1024).toFixed(1);
+  
+  log('OK [' + count + '] ' + name.split('/').pop() + ' (' + sizeKB + ' KB)', 'ok');
+  
+  // Tambah ke file list
+  const list = $('fileList');
+  const existing = list.querySelector('.placeholder');
+  if (existing) existing.remove();
+  
+  const item = document.createElement('div');
+  item.className = 'file-item';
+  item.innerHTML = '<span class="fext">' + ext + '</span>' +
+                   '<span class="fname">' + name.split('/').pop() + '</span>' +
+                   '<span class="fsize">' + sizeKB + ' KB</span>';
+  list.insertBefore(item, list.firstChild);
+  
+  // Batasi 100 item visual
+  while (list.children.length > 100) list.removeChild(list.lastChild);
+};
+
+function refreshStats() {
+  if (window.Android && window.Android.getStats) {
     try {
-      const u = new URL(f.url);
-      path = u.hostname + '/' + u.pathname.replace(/^\//, '');
-    } catch(e) {}
-    zip.file(path, f.data);
+      const stats = JSON.parse(window.Android.getStats());
+      $('statFiles').textContent = stats.count;
+      $('statMB').textContent = (stats.bytes / 1024 / 1024).toFixed(2);
+      $('cntFiles').textContent = stats.count;
+      lastCount = stats.count;
+      
+      if (stats.count > 0) {
+        const pct = Math.min(95, Math.log(stats.count + 1) * 20);
+        setProgress(pct, stats.count + ' files');
+        $('zipBtn').style.display = 'block';
+      }
+    } catch (e) { log('Stats error: ' + e.message, 'err'); }
   }
-  
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'snatch-' + Date.now() + '.zip';
-  a.click();
-  log('ZIP downloaded', 'ok');
 }
 
-function loadScript(src) {
-  return new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = res;
-    s.onerror = rej;
-    document.head.appendChild(s);
-  });
-}
-
-async function uploadGithub() {
-  const user = prompt('GitHub username:');
-  if (!user) return;
-  const token = prompt('GitHub token:');
-  if (!token) return;
-  const repo = prompt('Repo name:', 'mahjong-assets');
-  if (!repo) return;
-  
-  log('Uploading ' + files.length + ' file ke GitHub...', 'info');
-  let ok = 0, err = 0;
-  for (const f of files) {
-    try {
-      const path = 'snatch/' + f.url.replace(/https?:\/\//, '').replace(/[^\w./-]/g, '_');
-      const b64 = btoa(String.fromCharCode(...f.data.slice(0, 1000))); // simple
-      const content = btoa(unescape(encodeURIComponent(new TextDecoder().decode(f.data)))); // full
-      
-      let sha = null;
-      try {
-        const r = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, {
-          headers: { 'Authorization': 'token ' + token }
-        });
-        if (r.ok) sha = (await r.json()).sha;
-      } catch(e) {}
-      
-      const body = { message: 'add ' + path, content, branch: 'main' };
-      if (sha) body.sha = sha;
-      
-      const r = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': 'token ' + token,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-      if (r.ok) { ok++; log('↑ ' + path, 'ok'); }
-      else { err++; log('× ' + path, 'err'); }
-    } catch(e) {
-      err++;
-      log('× ' + f.url + ': ' + e.message, 'err');
+function saveZip() {
+  log('Membuat ZIP...', 'info');
+  setProgress(100, 'ZIP...');
+  if (window.Android && window.Android.saveZip) {
+    const path = window.Android.saveZip();
+    if (path.startsWith('ERROR')) {
+      log('ZIP gagal: ' + path, 'err');
+      setProgress(0, 'Error');
+    } else {
+      log('✓ ZIP disimpan: ' + path, 'ok');
+      setProgress(100, '✓ Selesai');
+      alert('ZIP tersimpan di:\n' + path);
     }
   }
-  log('Upload selesai: OK=' + ok + ' ERR=' + err, 'info');
 }
 
-$('url').value = 'https://public.pg-demo.com/demo/?gi=65&lang=en';
+function clearCapture() {
+  if (!confirm('Hapus semua file yang udah ke-capture?')) return;
+  if (window.Android && window.Android.clearCapture) {
+    window.Android.clearCapture();
+    $('statFiles').textContent = '0';
+    $('statMB').textContent = '0.00';
+    $('cntFiles').textContent = '0';
+    lastCount = 0;
+    setProgress(0, 'Idle');
+    $('fileList').innerHTML = '<div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web" untuk mulai.</div>';
+    $('log').innerHTML = '';
+    $('zipBtn').style.display = 'none';
+    log('Cleared', 'warn');
+  }
+}
+
+window.addEventListener('load', () => {
+  log('Ready. Input URL, klik Buka Web.', 'info');
+  setProgress(0, 'Idle');
+});
 </script>
 </body>
 </html>
