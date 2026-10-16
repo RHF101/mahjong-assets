@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.rhf.v5'
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.rhf.v5"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "5.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+dependencies {
+    // NOLAK dependency external — semua pakai Android SDK
+}
