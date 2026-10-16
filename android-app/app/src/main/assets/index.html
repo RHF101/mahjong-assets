@@ -16,50 +16,46 @@ h1{color:#4ade80;font-size:22px}
 .btn:active{opacity:.8}
 .btn-sec{background:#2a1f4a;color:#4ade80}
 .btn-danger{background:#e74c3c;color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:disabled{opacity:.4}
 .row{display:flex;gap:8px;margin-top:8px}
 .row .btn{flex:1;margin:0}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .stat{background:#1a1a2e;border-radius:8px;padding:12px;text-align:center}
 .stat .num{font-size:22px;color:#4ade80;font-weight:700}
 .stat .label{font-size:10px;color:#888}
-/* Progress bar */
-.progress-wrap{background:#0a0a0f;border-radius:8px;padding:4px;margin-bottom:12px;position:relative;overflow:hidden}
-.progress-bar{height:28px;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:6px;width:0%;transition:width .3s ease;display:flex;align-items:center;justify-content:center;color:#0a0a0f;font-weight:700;font-size:12px;min-width:40px}
-.progress-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:12px;pointer-events:none;text-shadow:0 0 4px #000}
-/* Status badges */
-.status{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;margin-right:6px}
-.status.ok{background:#4ade80;color:#0a0a0f}
-.status.err{background:#e74c3c;color:#fff}
-.status.run{background:#fbbf24;color:#0a0a0f}
-/* File list */
+.progress-wrap{background:#0a0a0f;border-radius:8px;padding:4px;margin-bottom:12px;position:relative;overflow:hidden;height:36px}
+.progress-bar{height:28px;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:6px;width:0%;transition:width .3s ease;min-width:0}
+.progress-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:12px;text-shadow:0 0 4px #000}
 .file-list{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;max-height:400px;overflow-y:auto;font-family:monospace;font-size:11px}
 .file-item{padding:8px 12px;border-bottom:1px solid #1a1a2e;display:flex;justify-content:space-between;align-items:center;gap:6px}
 .file-item:last-child{border-bottom:none}
+.file-item .fext{padding:2px 6px;background:#2a1f4a;color:#4ade80;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;min-width:38px;text-align:center}
 .file-item .fname{flex:1;word-break:break-all;color:#ccc}
 .file-item .fsize{color:#4ade80;font-weight:700;white-space:nowrap}
-.file-item .fext{padding:2px 5px;background:#2a1f4a;color:#4ade80;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase}
+.file-item.f-json .fext{background:#2a1f4a;color:#fbbf24}
+.file-item.f-js .fext{background:#3d1a1a;color:#f87171}
+.file-item.f-png .fext,.file-item.f-jpg .fext,.file-item.f-webp .fext{background:#1a2a3d;color:#60a5fa}
+.file-item.f-mp3 .fext,.file-item.f-ogg .fext{background:#2a1a3d;color:#c084fc}
 .log{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.5;margin-top:8px}
 .log .info{color:#60a5fa}
 .log .ok{color:#4ade80}
 .log .warn{color:#fbbf24}
 .log .err{color:#f87171}
-.info-box{padding:10px;border-radius:8px;background:#1a2a3d;color:#60a5fa;font-size:11px;margin-bottom:10px;line-height:1.5}
-.hidden{display:none}
 .tab-row{display:flex;gap:4px;margin-bottom:8px}
 .tab{flex:1;padding:8px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:6px;color:#888;font-size:12px;cursor:pointer;text-align:center}
 .tab.active{background:#2a1f4a;color:#4ade80;border-color:#4ade80}
+.hidden{display:none}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>Web Snatcher</h1>
-<div class="sub">Auto-capture asset dari web → ZIP</div>
+<h1>Web Snatcher v2</h1>
+<div class="sub">Intercept SEMUA file dari WebView → ZIP</div>
 
 <div class="card">
   <input class="input" id="url" placeholder="https://..." autocomplete="off" value="https://public.pg-demo.com/demo/?gi=65&lang=en">
-  <button class="btn" id="openBtn" onclick="openWeb()">▶ Buka Web & Mulai Capture</button>
-  <button class="btn btn-sec" id="zipBtn" onclick="saveZip()" style="display:none">💾 Save ZIP</button>
+  <button class="btn" id="openBtn" onclick="openWeb()">▶ Buka Web & Capture</button>
+  <button class="btn btn-sec hidden" id="zipBtn" onclick="saveZip()">💾 Save ZIP</button>
 </div>
 
 <div class="card">
@@ -67,12 +63,10 @@ h1{color:#4ade80;font-size:22px}
     <div class="stat"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
     <div class="stat"><div class="num" id="statMB">0.00</div><div class="label">MB</div></div>
   </div>
-  
   <div class="progress-wrap">
     <div class="progress-bar" id="progressBar"></div>
     <div class="progress-label" id="progressLabel">Idle</div>
   </div>
-  
   <div class="row">
     <button class="btn btn-sec" style="margin:0" onclick="refreshStats()">↻ Refresh</button>
     <button class="btn btn-danger" style="margin:0" onclick="clearCapture()">🗑 Clear</button>
@@ -84,13 +78,11 @@ h1{color:#4ade80;font-size:22px}
     <div class="tab active" onclick="switchTab('files', this)">📁 Files (<span id="cntFiles">0</span>)</div>
     <div class="tab" onclick="switchTab('log', this)">📜 Log</div>
   </div>
-  
   <div id="filesTab">
     <div class="file-list" id="fileList">
-      <div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web" untuk mulai.</div>
+      <div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web".</div>
     </div>
   </div>
-  
   <div id="logTab" class="hidden">
     <div class="log" id="log"></div>
   </div>
@@ -100,8 +92,6 @@ h1{color:#4ade80;font-size:22px}
 
 <script>
 const $ = id => document.getElementById(id);
-let captureStarted = false;
-let captureTimer = null;
 let lastCount = 0;
 
 function log(msg, cls) {
@@ -131,86 +121,222 @@ function openWeb() {
   setProgress(0, 'Loading...');
   $('openBtn').disabled = true;
   $('openBtn').textContent = '⏳ Capturing...';
-  $('zipBtn').style.display = 'none';
-  
+
   if (window.Android && window.Android.openWeb) {
     window.Android.openWeb(url);
-    captureStarted = true;
-    // Mulai auto-refresh stats tiap 1 detik
-    let elapsed = 0;
-    captureTimer = setInterval(() => {
-      elapsed++;
-      refreshStats();
-      // Auto-enable ZIP button setelah 10 detik atau kalau ada 5+ file
-      if (lastCount >= 3 || elapsed >= 15) {
-        $('zipBtn').style.display = 'block';
-      }
-    }, 1000);
+    // Auto refresh
+    setInterval(() => { refreshStats(); }, 1500);
   } else {
     log('ERROR: bridge nggak ada', 'err');
   }
 }
 
-// Dipanggil dari Java saat ada file captured
 window.onCapture = function(count, bytes, name) {
   $('statFiles').textContent = count;
   $('statMB').textContent = (bytes / 1024 / 1024).toFixed(2);
   $('cntFiles').textContent = count;
   lastCount = count;
-  
-  // Animasi progress (pseudo — nggak ada total)
+
   const pct = Math.min(95, Math.log(count + 1) * 20);
   setProgress(pct, count + ' files');
-  
-  const ext = name.split('.').pop().toUpperCase();
-  const sizeKB = (bytes / 1024).toFixed(1);
-  
-  log('OK [' + count + '] ' + name.split('/').pop() + ' (' + sizeKB + ' KB)', 'ok');
-  
-  // Tambah ke file list
-  const list = $('fileList');
-  const existing = list.querySelector('.placeholder');
-  if (existing) existing.remove();
-  
-  const item = document.createElement('div');
-  item.className = 'file-item';
-  item.innerHTML = '<span class="fext">' + ext + '</span>' +
-                   '<span class="fname">' + name.split('/').pop() + '</span>' +
-                   '<span class="fsize">' + sizeKB + ' KB</span>';
+
+  const ext = name.split('.').pop().toLowerCase().substring(0, 5);
+  const 
+cd ~/mahjong/mahjong-assets/android-app
+
+cat > app/src/main/assets/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Snatcher</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,system-ui,sans-serif}
+body{background:#0a0a0f;color:#fff;padding:16px;min-height:100vh}
+.container{max-width:700px;margin:0 auto}
+h1{color:#4ade80;font-size:22px}
+.sub{color:#888;font-size:12px;margin-bottom:16px}
+.card{background:#13131f;border:1px solid #2a1f4a;border-radius:12px;padding:16px;margin-bottom:16px}
+.input{width:100%;padding:14px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;color:#fff;font-size:14px;margin-bottom:10px;font-family:monospace}
+.btn{width:100%;padding:14px;background:#4ade80;border:none;border-radius:8px;color:#0a0a0f;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:8px}
+.btn:active{opacity:.8}
+.btn-sec{background:#2a1f4a;color:#4ade80}
+.btn-danger{background:#e74c3c;color:#fff}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;margin-top:8px}
+.row .btn{flex:1;margin:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:#1a1a2e;border-radius:8px;padding:12px;text-align:center}
+.stat .num{font-size:22px;color:#4ade80;font-weight:700}
+.stat .label{font-size:10px;color:#888}
+.progress-wrap{background:#0a0a0f;border-radius:8px;padding:4px;margin-bottom:12px;position:relative;overflow:hidden;height:36px}
+.progress-bar{height:28px;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:6px;width:0%;transition:width .3s ease}
+.progress-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:12px;text-shadow:0 0 4px #000}
+.file-list{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;max-height:400px;overflow-y:auto;font-family:monospace;font-size:11px}
+.file-item{padding:8px 12px;border-bottom:1px solid #1a1a2e;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.file-item:last-child{border-bottom:none}
+.file-item .fext{padding:2px 6px;background:#2a1f4a;color:#4ade80;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;min-width:38px;text-align:center}
+.file-item .fname{flex:1;word-break:break-all;color:#ccc}
+.file-item .fsize{color:#4ade80;font-weight:700;white-space:nowrap}
+.file-item.f-json .fext{background:#2a1f4a;color:#fbbf24}
+.file-item.f-js .fext{background:#3d1a1a;color:#f87171}
+.file-item.f-png .fext,.file-item.f-jpg .fext,.file-item.f-webp .fext{background:#1a2a3d;color:#60a5fa}
+.file-item.f-mp3 .fext,.file-item.f-ogg .fext{background:#2a1a3d;color:#c084fc}
+.log{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.5;margin-top:8px}
+.log .info{color:#60a5fa}
+.log .ok{color:#4ade80}
+.log .warn{color:#fbbf24}
+.log .err{color:#f87171}
+.tab-row{display:flex;gap:4px;margin-bottom:8px}
+.tab{flex:1;padding:8px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:6px;color:#888;font-size:12px;cursor:pointer;text-align:center}
+.tab.active{background:#2a1f4a;color:#4ade80;border-color:#4ade80}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Web Snatcher v2</h1>
+<div class="sub">Intercept SEMUA file dari WebView → ZIP</div>
+
+<div class="card">
+  <input class="input" id="url" placeholder="https://..." autocomplete="off" value="https://public.pg-demo.com/demo/?gi=65&lang=en">
+  <button class="btn" id="openBtn" onclick="openWeb()">▶ Buka Web & Capture</button>
+  <button class="btn btn-sec hidden" id="zipBtn" onclick="saveZip()">💾 Save ZIP</button>
+</div>
+
+<div class="card">
+  <div class="stats">
+    <div class="stat"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
+    <div class="stat"><div class="num" id="statMB">0.00</div><div class="label">MB</div></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="progress-label" id="progressLabel">Idle</div>
+  </div>
+  <div class="row">
+    <button class="btn btn-sec" style="margin:0" onclick="refreshStats()">↻ Refresh</button>
+    <button class="btn btn-danger" style="margin:0" onclick="clearCapture()">🗑 Clear</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="tab-row">
+    <div class="tab active" onclick="switchTab('files', this)">📁 Files (<span id="cntFiles">0</span>)</div>
+    <div class="tab" onclick="switchTab('log', this)">📜 Log</div>
+  </div>
+  <div id="filesTab">
+    <div class="file-list" id="fileList">
+      <div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web".</div>
+    </div>
+  </div>
+  <div id="logTab" class="hidden">
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+var $ = function(id){return document.getElementById(id)};
+var lastCount = 0;
+
+function log(msg, cls) {
+  var el = document.createElement('div');
+  if (cls) el.className = cls;
+  el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  $('log').appendChild(el);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function switchTab(name, el) {
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  el.classList.add('active');
+  $('filesTab').classList.toggle('hidden', name !== 'files');
+  $('logTab').classList.toggle('hidden', name !== 'log');
+}
+
+function setProgress(pct, label) {
+  $('progressBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+  $('progressLabel').textContent = label || (pct.toFixed(0) + '%');
+}
+
+function openWeb() {
+  var url = $('url').value.trim();
+  if (!url) return;
+  log('Membuka: ' + url, 'info');
+  setProgress(0, 'Loading...');
+  $('openBtn').disabled = true;
+  $('openBtn').textContent = '⏳ Capturing...';
+
+  if (window.Android && window.Android.openWeb) {
+    window.Android.openWeb(url);
+    setInterval(function() { refreshStats(); }, 1500);
+  } else {
+    log('ERROR: bridge nggak ada', 'err');
+  }
+}
+
+window.onCapture = function(count, bytes, name) {
+  $('statFiles').textContent = count;
+  $('statMB').textContent = (bytes / 1024 / 1024).toFixed(2);
+  $('cntFiles').textContent = count;
+  lastCount = count;
+
+  var pct = Math.min(95, Math.log(count + 1) * 20);
+  setProgress(pct, count + ' files');
+
+  var ext = name.split('.').pop().toLowerCase().substring(0, 5);
+  var sizeKB = (bytes / 1024).toFixed(1);
+
+  log('[' + count + '] ' + name.split('/').pop() + ' (' + sizeKB + ' KB)', 'ok');
+
+  var list = $('fileList');
+  var ph = list.querySelector('.placeholder');
+  if (ph) ph.remove();
+
+  var item = document.createElement('div');
+  item.className = 'file-item f-' + ext;
+  var shortName = name.length > 60 ? '...' + name.substring(name.length - 57) : name;
+  item.innerHTML =
+    '<span class="fext">' + ext + '</span>' +
+    '<span class="fname">' + shortName.split('/').pop() + '</span>' +
+    '<span class="fsize">' + sizeKB + 'K</span>';
   list.insertBefore(item, list.firstChild);
-  
-  // Batasi 100 item visual
-  while (list.children.length > 100) list.removeChild(list.lastChild);
+
+  while (list.children.length > 200) list.removeChild(list.lastChild);
+
+  if (count >= 3) $('zipBtn').classList.remove('hidden');
 };
 
 function refreshStats() {
   if (window.Android && window.Android.getStats) {
     try {
-      const stats = JSON.parse(window.Android.getStats());
+      var stats = JSON.parse(window.Android.getStats());
       $('statFiles').textContent = stats.count;
       $('statMB').textContent = (stats.bytes / 1024 / 1024).toFixed(2);
       $('cntFiles').textContent = stats.count;
       lastCount = stats.count;
-      
       if (stats.count > 0) {
-        const pct = Math.min(95, Math.log(stats.count + 1) * 20);
+        var pct = Math.min(95, Math.log(stats.count + 1) * 20);
         setProgress(pct, stats.count + ' files');
-        $('zipBtn').style.display = 'block';
+        $('zipBtn').classList.remove('hidden');
       }
-    } catch (e) { log('Stats error: ' + e.message, 'err'); }
+    } catch (e) {}
   }
 }
 
 function saveZip() {
-  log('Membuat ZIP...', 'info');
+  log('Bikin ZIP...', 'info');
   setProgress(100, 'ZIP...');
   if (window.Android && window.Android.saveZip) {
-    const path = window.Android.saveZip();
+    var path = window.Android.saveZip();
     if (path.startsWith('ERROR')) {
       log('ZIP gagal: ' + path, 'err');
       setProgress(0, 'Error');
     } else {
-      log('✓ ZIP disimpan: ' + path, 'ok');
+      log('✓ ' + path, 'ok');
       setProgress(100, '✓ Selesai');
       alert('ZIP tersimpan di:\n' + path);
     }
@@ -218,7 +344,7 @@ function saveZip() {
 }
 
 function clearCapture() {
-  if (!confirm('Hapus semua file yang udah ke-capture?')) return;
+  if (!confirm('Hapus semua file?')) return;
   if (window.Android && window.Android.clearCapture) {
     window.Android.clearCapture();
     $('statFiles').textContent = '0';
@@ -226,14 +352,15 @@ function clearCapture() {
     $('cntFiles').textContent = '0';
     lastCount = 0;
     setProgress(0, 'Idle');
-    $('fileList').innerHTML = '<div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file. Klik "Buka Web" untuk mulai.</div>';
+    $('fileList').innerHTML = '<div style="padding:20px;text-align:center;color:#666;font-size:12px">Belum ada file.</div>';
     $('log').innerHTML = '';
-    $('zipBtn').style.display = 'none';
-    log('Cleared', 'warn');
+    $('zipBtn').classList.add('hidden');
+    $('openBtn').disabled = false;
+    $('openBtn').textContent = '▶ Buka Web & Capture';
   }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', function() {
   log('Ready. Input URL, klik Buka Web.', 'info');
   setProgress(0, 'Idle');
 });
