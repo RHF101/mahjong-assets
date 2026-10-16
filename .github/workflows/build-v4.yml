@@ -1,0 +1,75 @@
+name: Build Super Snatcher V4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/V4-super-aggressive/**'
+      - '.github/workflows/build-v4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+
+      - name: Setup gradle wrapper
+        working-directory: android/V4-super-aggressive
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sL https://github.com/gradle/gradle/raw/v8.2.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradlew -o gradlew
+          chmod +x gradlew
+          cp ../../android/settings.gradle . 2>/dev/null || true
+          cp ../../android/build.gradle . 2>/dev/null || true
+          cp ../../android/gradle.properties . 2>/dev/null || true
+
+      - name: Build
+        working-directory: android/V4-super-aggressive
+        run: |
+          cat > settings.gradle << 'GRADLE'
+          rootProject.name = "SuperSnatcher"
+          include ':app'
+          GRADLE
+          cat > build.gradle << 'GRADLE'
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.1.4' }
+          }
+          allprojects {
+              repositories { google(); mavenCentral() }
+          }
+          GRADLE
+          echo 'org.gradle.jvmargs=-Xmx2048m' > gradle.properties
+          echo 'android.useAndroidX=true' >> gradle.properties
+          echo 'android.nonTransitiveRClass=true' >> gradle.properties
+          ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperSnatcher-V4
+          path: android/V4-super-aggressive/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v4-build-${{ github.run_number }}
+          name: Super Snatcher V4 build ${{ github.run_number }}
+          files: android/V4-super-aggressive/app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
