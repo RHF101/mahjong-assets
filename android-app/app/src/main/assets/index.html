@@ -119,13 +119,52 @@ function b64ToBytes(b64) {
 
 async function fetchWithProxy(url, ref) {
   const useProxy = $('optProxy').checked;
-  const target = useProxy ? 'https://corsproxy.io/?' + encodeURIComponent(url) : url;
-  const headers = {};
-  if (ref && !useProxy) headers['Referer'] = ref;
-  const r = await fetch(target, { headers });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const buf = await r.arrayBuffer();
-  return new Uint8Array(buf);
+  const headers = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9'
+  };
+  if (ref) headers['Referer'] = ref;
+
+  // Coba direct dulu kalau proxy dimatiin
+  if (!useProxy) {
+    try {
+      const r = await fetch(url, { headers, mode: 'cors' });
+      if (r.ok) {
+        const buf = await r.arrayBuffer();
+        return new Uint8Array(buf);
+      }
+    } catch(e) {}
+  }
+
+  // Multi-proxy fallback
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.org/?',
+    'https://thingproxy.freeboard.io/fetch/',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+
+  let lastErr = null;
+  for (const proxy of proxies) {
+    try {
+      let target;
+      if (proxy.endsWith('=') || proxy.endsWith('?')) {
+        target = proxy + encodeURIComponent(url);
+      } else {
+        target = proxy + url;
+      }
+      const r = await fetch(target, { headers });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const buf = await r.arrayBuffer();
+      // Cek kalau response body nggak kosong
+      if (buf.byteLength === 0) throw new Error('empty');
+      return new Uint8Array(buf);
+    } catch(e) {
+      lastErr = e;
+    }
+  }
+
+  throw lastErr || new Error('All proxies failed');
 }
 
 function extractUrls(baseUrl, html) {
