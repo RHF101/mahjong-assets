@@ -14,64 +14,58 @@ h1{color:#4ade80;margin-bottom:16px;font-size:22px}
 .btn{width:100%;padding:12px;background:#4ade80;border:none;border-radius:8px;color:#0a0a0f;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:8px}
 .btn:active{opacity:.8}
 .btn-sec{background:#2a1f4a;color:#4ade80}
-.btn-danger{background:#e74c3c;color:#fff}
 .file-list{list-style:none}
-.file-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#1a1a2e;border-radius:8px;margin-bottom:6px;font-size:13px;word-break:break-all}
-.file-item .name{flex:1;margin-right:8px;font-family:monospace}
-.file-item .size{color:#888;font-size:11px;margin-right:8px}
-.file-item .type{color:#4ade80;font-size:11px;font-weight:700;min-width:20px}
+.file-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#1a1a2e;border-radius:8px;margin-bottom:6px;font-size:13px;word-break:break-all;gap:8px}
+.file-item .name{flex:1;font-family:monospace;cursor:pointer}
+.file-item .size{color:#888;font-size:11px}
+.file-item .type{color:#4ade80;font-weight:700}
 .del-btn{background:#e74c3c;border:none;color:#fff;padding:6px 10px;border-radius:4px;font-size:11px;cursor:pointer}
-.del-btn:active{opacity:.7}
 .msg{padding:12px;border-radius:8px;margin-bottom:12px;font-size:13px}
 .msg-ok{background:#1a3d1a;color:#4ade80}
 .msg-err{background:#3d1a1a;color:#f87171}
 .msg-info{background:#1a2a3d;color:#60a5fa}
 .breadcrumb{color:#888;font-size:12px;margin-bottom:8px;word-break:break-all}
-.breadcrumb span{color:#4ade80;cursor:pointer}
+.breadcrumb span{color:#4ade80;cursor:pointer;margin-right:4px}
 .hidden{display:none}
 textarea{width:100%;padding:12px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;color:#fff;font-size:12px;font-family:monospace;min-height:120px;resize:vertical}
+.row{display:flex;gap:8px}
+.row .btn{flex:1}
 </style>
 </head>
 <body>
 <div class="container">
-
 <h1>Repo Manager</h1>
 
-<!-- LOGIN -->
 <div id="loginCard" class="card">
-  <h3 style="color:#4ade80;margin-bottom:12px;font-size:16px">Login GitHub</h3>
-  <input class="input" id="user" placeholder="Username GitHub">
+  <h3 style="color:#4ade80;margin-bottom:12px">Login GitHub</h3>
+  <input class="input" id="user" placeholder="Username" value="RHF101">
   <input class="input" id="token" type="password" placeholder="Personal Access Token">
-  <input class="input" id="repo" placeholder="Nama repo (contoh: mahjong-assets)">
+  <input class="input" id="repo" placeholder="Repo" value="mahjong-assets">
   <button class="btn" onclick="login()">Login</button>
   <div id="loginMsg"></div>
 </div>
 
-<!-- BROWSER -->
 <div id="browserCard" class="card hidden">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <h3 style="color:#4ade80;font-size:16px" id="repoName">Repo</h3>
     <button class="btn-sec btn" style="width:auto;padding:6px 12px;font-size:12px;margin:0" onclick="logout()">Logout</button>
   </div>
-  <div class="breadcrumb" id="breadcrumb">
-    <span onclick="loadPath('')">root</span>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:12px">
-    <button class="btn" style="flex:1;margin:0" onclick="loadPath(currentPath)">Refresh</button>
-    <button class="btn btn-sec" style="flex:1;margin:0" onclick="showUpload()">Upload</button>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div class="row" style="margin-bottom:12px">
+    <button class="btn" style="margin:0" onclick="loadPath(currentPath)">Refresh</button>
+    <button class="btn btn-sec" style="margin:0" onclick="showUpload()">Upload</button>
   </div>
   <ul class="file-list" id="fileList"></ul>
   <div id="browseMsg"></div>
 </div>
 
-<!-- UPLOAD -->
 <div id="uploadCard" class="card hidden">
-  <h3 style="color:#4ade80;margin-bottom:12px;font-size:16px">Upload File</h3>
-  <input class="input" id="uploadPath" placeholder="Path di repo (contoh: assets/test.txt)">
+  <h3 style="color:#4ade80;margin-bottom:12px">Upload File</h3>
+  <input class="input" id="uploadPath" placeholder="Path di repo">
   <textarea id="uploadContent" placeholder="Isi file (text)..."></textarea>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button class="btn" style="flex:1;margin:0" onclick="doUpload()">Upload</button>
-    <button class="btn btn-sec" style="flex:1;margin:0" onclick="hideUpload()">Batal</button>
+  <div class="row" style="margin-top:8px">
+    <button class="btn" style="margin:0" onclick="doUpload()">Upload</button>
+    <button class="btn btn-sec" style="margin:0" onclick="hideUpload()">Batal</button>
   </div>
   <div id="uploadMsg"></div>
 </div>
@@ -79,41 +73,29 @@ textarea{width:100%;padding:12px;background:#0a0a0f;border:1px solid #2a1f4a;bor
 </div>
 
 <script>
-let githubUser = '';
-let githubToken = '';
-let githubRepo = '';
-let currentPath = '';
-
+let githubUser = '', githubToken = '', githubRepo = '', currentPath = '';
 const $ = id => document.getElementById(id);
 
 function msg(el, text, type='info') {
   const cls = {ok:'msg-ok', err:'msg-err', info:'msg-info'}[type] || 'msg-info';
-  el.innerHTML = `<div class="msg ${cls}">${text}</div>`;
-  setTimeout(() => el.innerHTML = '', 5000);
+  el.innerHTML = text ? `<div class="msg ${cls}">${text}</div>` : '';
+  if (text) setTimeout(() => el.innerHTML = '', 5000);
 }
 
 function login() {
   const u = $('user').value.trim();
   const t = $('token').value.trim();
   const r = $('repo').value.trim();
-  if (!u || !t || !r) { msg($('loginMsg'), 'Isi semua field', 'err'); return; }
-  
-  githubUser = u;
-  githubToken = t;
-  githubRepo = r;
-  
-  // Simpan ke localStorage
+  if (!u || !t || !r) { msg($('loginMsg'), 'Isi semua', 'err'); return; }
+  githubUser = u; githubToken = t; githubRepo = r;
   localStorage.setItem('gh_user', u);
   localStorage.setItem('gh_token', t);
   localStorage.setItem('gh_repo', r);
-  
   loadPath('');
 }
 
 function logout() {
-  localStorage.removeItem('gh_user');
-  localStorage.removeItem('gh_token');
-  localStorage.removeItem('gh_repo');
+  localStorage.clear();
   githubUser = githubToken = githubRepo = '';
   $('loginCard').classList.remove('hidden');
   $('browserCard').classList.add('hidden');
@@ -128,50 +110,46 @@ async function api(path) {
       'Accept': 'application/vnd.github.v3+json'
     }
   });
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
 
 async function loadPath(path) {
   currentPath = path;
-  msg($('browseMsg'), 'Loading...', 'info');
-  
   try {
     const data = await api(`/contents/${path}`);
+    $('loginCard').classList.add('hidden');
     $('browserCard').classList.remove('hidden');
     $('repoName').textContent = `${githubUser}/${githubRepo}`;
-    $('breadcrumb').innerHTML = '<span onclick="loadPath(\'\')">root</span>' + 
-      (path ? ' / ' + path.split('/').map((p, i, arr) => {
-        const sub = arr.slice(0, i+1).join('/');
-        return `<span onclick="loadPath('${sub}')">${p}</span>`;
-      }).join(' / ') : '');
-    
+
+    let bc = '<span onclick="loadPath(\'\')">root</span>';
+    if (path) {
+      const parts = path.split('/');
+      parts.forEach((p, i) => {
+        const sub = parts.slice(0, i+1).join('/');
+        bc += ` / <span onclick="loadPath('${sub}')">${p}</span>`;
+      });
+    }
+    $('breadcrumb').innerHTML = bc;
+
     const list = $('fileList');
     list.innerHTML = '';
-    
+
     if (path) {
       const parent = path.split('/').slice(0, -1).join('/');
-      list.innerHTML += `<li class="file-item"><span class="name" onclick="loadPath('${parent}')">📁 ..</span></li>`;
+      list.innerHTML += `<li class="file-item"><span class="type">📁</span><span class="name" onclick="loadPath('${parent}')">..</span></li>`;
     }
-    
+
     const items = Array.isArray(data) ? data : [data];
     for (const f of items) {
       const li = document.createElement('li');
       li.className = 'file-item';
       const icon = f.type === 'dir' ? '📁' : '📄';
-      const size = f.size ? `${(f.size/1024).toFixed(1)} KB` : '';
+      const size = f.size ? `${(f.size/1024).toFixed(1)}K` : '';
       const click = f.type === 'dir' ? `onclick="loadPath('${f.path}')"` : '';
-      
-      li.innerHTML = `
-        <span class="type">${icon}</span>
-        <span class="name" ${click}>${f.name}</span>
-        <span class="size">${size}</span>
-        <button class="del-btn" onclick="delFile('${f.path}', '${f.sha}')">Hapus</button>
-      `;
+      li.innerHTML = `<span class="type">${icon}</span><span class="name" ${click}>${f.name}</span><span class="size">${size}</span><button class="del-btn" onclick="delFile('${f.path}', '${f.sha}')">X</button>`;
       list.appendChild(li);
     }
-    
-    msg($('browseMsg'), '', 'info');
   } catch (e) {
     msg($('browseMsg'), `Error: ${e.message}`, 'err');
   }
@@ -193,43 +171,28 @@ async function delFile(path, sha) {
     msg($('browseMsg'), `Terhapus: ${path}`, 'ok');
     loadPath(currentPath);
   } catch (e) {
-    msg($('browseMsg'), `Gagal hapus: ${e.message}`, 'err');
+    msg($('browseMsg'), `Gagal: ${e.message}`, 'err');
   }
 }
 
 function showUpload() {
   $('uploadCard').classList.remove('hidden');
   $('uploadPath').value = currentPath ? currentPath + '/' : '';
-  $('uploadPath').focus();
 }
-
 function hideUpload() {
   $('uploadCard').classList.add('hidden');
-  $('uploadMsg').innerHTML = '';
 }
 
 async function doUpload() {
   const path = $('uploadPath').value.trim();
   const content = $('uploadContent').value;
   if (!path) { msg($('uploadMsg'), 'Isi path', 'err'); return; }
-  
   const b64 = btoa(unescape(encodeURIComponent(content)));
-  
   try {
-    // Cek apakah file ada (buat update)
     let sha = null;
-    try {
-      const existing = await api(`/contents/${path}`);
-      sha = existing.sha;
-    } catch (e) {}
-    
-    const body = {
-      message: `upload ${path}`,
-      content: b64,
-      branch: 'main'
-    };
+    try { const e = await api(`/contents/${path}`); sha = e.sha; } catch (e) {}
+    const body = { message: `upload ${path}`, content: b64, branch: 'main' };
     if (sha) body.sha = sha;
-    
     const r = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${path}`, {
       method: 'PUT',
       headers: {
@@ -239,15 +202,14 @@ async function doUpload() {
       },
       body: JSON.stringify(body)
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    msg($('uploadMsg'), `Berhasil upload: ${path}`, 'ok');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    msg($('uploadMsg'), `OK: ${path}`, 'ok');
     setTimeout(() => { hideUpload(); loadPath(currentPath); }, 1500);
   } catch (e) {
     msg($('uploadMsg'), `Gagal: ${e.message}`, 'err');
   }
 }
 
-// Auto-login
 window.onload = () => {
   const u = localStorage.getItem('gh_user');
   const t = localStorage.getItem('gh_token');
