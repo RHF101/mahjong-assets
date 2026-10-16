@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Web Snatcher</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,system-ui,sans-serif}
+body{background:#0a0a0f;color:#fff;min-height:100vh;padding:16px}
+.container{max-width:700px;margin:0 auto}
+h1{color:#4ade80;font-size:22px;margin-bottom:4px}
+.sub{color:#888;font-size:12px;margin-bottom:16px}
+.card{background:#13131f;border:1px solid #2a1f4a;border-radius:12px;padding:16px;margin-bottom:16px}
+.input{width:100%;padding:12px;background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;color:#fff;font-size:14px;margin-bottom:8px;font-family:monospace}
+.btn{width:100%;padding:14px;background:#4ade80;border:none;border-radius:8px;color:#0a0a0f;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:8px}
+.btn:active{opacity:.8}
+.btn-sec{background:#2a1f4a;color:#4ade80}
+.btn-danger{background:#e74c3c;color:#fff}
+.row{display:flex;gap:8px}
+.row .btn{flex:1;margin:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:#1a1a2e;border-radius:8px;padding:10px;text-align:center}
+.stat .num{font-size:20px;color:#4ade80;font-weight:700}
+.stat .label{font-size:10px;color:#888}
+.log{background:#0a0a0f;border:1px solid #2a1f4a;border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.5}
+.log .ok{color:#4ade80}
+.log .err{color:#f87171}
+.log .info{color:#60a5fa}
+.log .warn{color:#fbbf24}
+.toggle{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a1f4a}
+.toggle:last-child{border-bottom:none}
+.toggle label{font-size:13px;color:#ccc}
+.toggle input[type=checkbox]{width:18px;height:18px;accent-color:#4ade80}
+.hidden{display:none}
+.file-item{padding:6px 10px;background:#1a1a2e;border-radius:6px;margin-bottom:4px;font-size:11px;font-family:monospace;word-break:break-all;display:flex;justify-content:space-between}
+.file-item .size{color:#888;margin-left:8px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Web Snatcher</h1>
+<div class="sub">Duplikat semua file dari web → ZIP</div>
+
+<div class="card">
+  <input class="input" id="url" placeholder="https://example.com" autocomplete="off">
+  <input class="input" id="ref" placeholder="Referer (opsional)" autocomplete="off">
+  <div class="row" style="margin-bottom:8px">
+    <button class="btn btn-sec" style="margin:0" onclick="toggleOptions()">⚙ Opsi</button>
+    <button class="btn" style="margin:0" onclick="start()">▶ SNATCH</button>
+  </div>
+</div>
+
+<div id="optionsCard" class="card hidden">
+  <div class="toggle"><label>Download gambar</label><input type="checkbox" id="optImg" checked></div>
+  <div class="toggle"><label>Download JS/CSS</label><input type="checkbox" id="optJs" checked></div>
+  <div class="toggle"><label>Download audio/video</label><input type="checkbox" id="optMedia" checked></div>
+  <div class="toggle"><label>Download fonts</label><input type="checkbox" id="optFont" checked></div>
+  <div class="toggle"><label>Follow JS imports</label><input type="checkbox" id="optFollow" checked></div>
+  <div class="toggle"><label>Use CORS proxy</label><input type="checkbox" id="optProxy" checked></div>
+  <div class="toggle"><label>Delay per request (ms)</label><input type="number" id="optDelay" value="100" style="width:80px"></div>
+  <div class="toggle"><label>Max files</label><input type="number" id="optMax" value="500" style="width:80px"></div>
+</div>
+
+<div class="card">
+  <div class="stats">
+    <div class="stat"><div class="num" id="statFiles">0</div><div class="label">Files</div></div>
+    <div class="stat"><div class="num" id="statSize">0</div><div class="label">MB</div></div>
+  </div>
+  <div class="row">
+    <button class="btn btn-sec" style="margin:0" onclick="clearLog()">🗑 Clear</button>
+    <button class="btn btn-danger" style="margin:0" onclick="stop()">⏸ Stop</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="log" id="log"><div class="info">Ready. Input URL, tap SNATCH.</div></div>
+</div>
+
+<div class="card hidden" id="zipCard">
+  <h3 style="color:#4ade80;font-size:14px;margin-bottom:8px">ZIP Ready</h3>
+  <div class="row">
+    <button class="btn" style="margin:0" onclick="downloadZip()">💾 Download ZIP</button>
+    <button class="btn btn-sec" style="margin:0" onclick="uploadGithub()">↑ GitHub</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+let files = [];
+let stopped = false;
+let totalBytes = 0;
+
+const $ = id => document.getElementById(id);
+
+function log(msg, cls='info') {
+  const el = document.createElement('div');
+  el.className = cls;
+  el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  $('log').appendChild(el);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function clearLog() { $('log').innerHTML = ''; }
+function toggleOptions() { $('optionsCard').classList.toggle('hidden'); }
+function stop() { stopped = true; log('Stopping...', 'warn'); }
+
+function updateStats() {
+  $('statFiles').textContent = files.length;
+  $('statSize').textContent = (totalBytes / 1024 / 1024).toFixed(2);
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function fetchWithProxy(url, ref) {
+  const useProxy = $('optProxy').checked;
+  const target = useProxy ? 'https://corsproxy.io/?' + encodeURIComponent(url) : url;
+  const headers = {};
+  if (ref && !useProxy) headers['Referer'] = ref;
+  const r = await fetch(target, { headers });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const buf = await r.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function extractUrls(baseUrl, html) {
+  const found = new Set();
+  const base = new URL(baseUrl);
+  
+  // HTML tags
+  const tagRegex = /(?:src|href|data-src|data-href|poster)\s*=\s*["']([^"']+)["']/gi;
+  let m;
+  while ((m = tagRegex.exec(html))) {
+    try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
+  }
+  
+  // CSS url()
+  const cssRegex = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+  while ((m = cssRegex.exec(html))) {
+    if (m[1].startsWith('data:')) continue;
+    try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
+  }
+  
+  // JS imports
+  if ($('optFollow').checked) {
+    const impRegex = /(?:import|require|fetch|XMLHttpRequest\.open)\s*\(\s*["']([^"']+)["']/gi;
+    while ((m = impRegex.exec(html))) {
+      try { found.add(new URL(m[1], baseUrl).href); } catch(e) {}
+    }
+    // Absolute URLs in JS
+    const absRegex = /["'](https?:\/\/[^"'\s<>]+)["']/gi;
+    while ((m = absRegex.exec(html))) {
+      found.add(m[1]);
+    }
+  }
+  
+  return found;
+}
+
+function isWanted(url) {
+  const u = url.toLowerCase();
+  if ($('optImg').checked && /\.(png|jpg|jpeg|gif|webp|svg|ico|bmp)$/.test(u)) return true;
+  if ($('optJs').checked && /\.(js|mjs|cjs|css|json|map)$/.test(u)) return true;
+  if ($('optMedia').checked && /\.(mp3|ogg|wav|m4a|mp4|webm|mov)$/.test(u)) return true;
+  if ($('optFont').checked && /\.(ttf|woff|woff2|otf|eot)$/.test(u)) return true;
+  // HTML sendiri
+  if (/\.(html|htm)$/.test(u) || !/\.\w{2,5}($|\?)/.test(u)) return true;
+  return false;
+}
+
+function getFilename(url) {
+  const u = new URL(url);
+  const path = u.pathname.split('/').filter(Boolean);
+  if (path.length === 0) return 'index.html';
+  return path[path.length - 1].split('?')[0] || 'index.html';
+}
+
+async function processUrl(url, ref, depth = 0) {
+  if (stopped) return;
+  if (files.find(f => f.url === url)) return;
+  const max = parseInt($('optMax').value) || 500;
+  if (files.length >= max) { stopped = true; return; }
+  
+  const delay = parseInt($('optDelay').value) || 100;
+  await new Promise(r => setTimeout(r, delay));
+  if (stopped) return;
+  
+  log('Fetch: ' + url.substring(0, 100), 'info');
+  
+  try {
+    const bytes = await fetchWithProxy(url, ref);
+    const filename = getFilename(url);
+    
+    files.push({ url, filename, data: bytes });
+    totalBytes += bytes.length;
+    updateStats();
+    log('OK ' + filename + ' (' + (bytes.length/1024).toFixed(1) + ' KB)', 'ok');
+    
+    // Kalau HTML/JS — parse lebih dalam
+    if ((filename.endsWith('.html') || filename.endsWith('.js') || filename.endsWith('.css')) && depth < 2) {
+      const text = new TextDecoder().decode(bytes);
+      const subUrls = extractUrls(url, text);
+      const toProcess = [...subUrls].filter(u => isWanted(u) && !files.find(f => f.url === u));
+      log('  Found ' + toProcess.length + ' sub-URLs', 'info');
+      for (const sub of toProcess.slice(0, 100)) {
+        await processUrl(sub, url, depth + 1);
+      }
+    }
+  } catch (e) {
+    log('ERR ' + url.substring(0, 80) + ': ' + e.message, 'err');
+  }
+}
+
+async function start() {
+  const url = $('url').value.trim();
+  const ref = $('ref').value.trim();
+  if (!url) { log('URL kosong', 'err'); return; }
+  
+  clearLog();
+  files = [];
+  totalBytes = 0;
+  stopped = false;
+  updateStats();
+  $('zipCard').classList.add('hidden');
+  
+  log('Start: ' + url, 'info');
+  await processUrl(url, ref, 0);
+  
+  if (files.length > 0) {
+    $('zipCard').classList.remove('hidden');
+    log('Selesai. ' + files.length + ' file, ' + (totalBytes/1024/1024).toFixed(2) + ' MB', 'ok');
+  } else {
+    log('Nggak ada file ke-download.', 'err');
+  }
+}
+
+async function downloadZip() {
+  // Pakai JSZip dari CDN
+  log('Creating ZIP...', 'info');
+  if (typeof JSZip === 'undefined') {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  }
+  const zip = new JSZip();
+  
+  for (const f of files) {
+    let path = f.filename;
+    try {
+      const u = new URL(f.url);
+      path = u.hostname + '/' + u.pathname.replace(/^\//, '');
+    } catch(e) {}
+    zip.file(path, f.data);
+  }
+  
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'snatch-' + Date.now() + '.zip';
+  a.click();
+  log('ZIP downloaded', 'ok');
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function uploadGithub() {
+  const user = prompt('GitHub username:');
+  if (!user) return;
+  const token = prompt('GitHub token:');
+  if (!token) return;
+  const repo = prompt('Repo name:', 'mahjong-assets');
+  if (!repo) return;
+  
+  log('Uploading ' + files.length + ' file ke GitHub...', 'info');
+  let ok = 0, err = 0;
+  for (const f of files) {
+    try {
+      const path = 'snatch/' + f.url.replace(/https?:\/\//, '').replace(/[^\w./-]/g, '_');
+      const b64 = btoa(String.fromCharCode(...f.data.slice(0, 1000))); // simple
+      const content = btoa(unescape(encodeURIComponent(new TextDecoder().decode(f.data)))); // full
+      
+      let sha = null;
+      try {
+        const r = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, {
+          headers: { 'Authorization': 'token ' + token }
+        });
+        if (r.ok) sha = (await r.json()).sha;
+      } catch(e) {}
+      
+      const body = { message: 'add ' + path, content, branch: 'main' };
+      if (sha) body.sha = sha;
+      
+      const r = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'token ' + token,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      if (r.ok) { ok++; log('↑ ' + path, 'ok'); }
+      else { err++; log('× ' + path, 'err'); }
+    } catch(e) {
+      err++;
+      log('× ' + f.url + ': ' + e.message, 'err');
+    }
+  }
+  log('Upload selesai: OK=' + ok + ' ERR=' + err, 'info');
+}
+
+$('url').value = 'https://public.pg-demo.com/demo/?gi=65&lang=en';
+</script>
+</body>
+</html>
