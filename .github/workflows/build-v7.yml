@@ -1,0 +1,54 @@
+name: Build V7
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/V7-fix/**'
+      - '.github/workflows/build-v7.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+
+      - name: Setup gradle wrapper
+        working-directory: android/V7-fix
+        run: |
+          curl -sL https://github.com/gradle/gradle/raw/v8.2.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradlew -o gradlew
+          chmod +x gradlew
+
+      - name: Build APK
+        working-directory: android/V7-fix
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: V7-APK
+          path: android/V7-fix/app/build/outputs/apk/release/*.apk
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v7-${{ github.run_number }}
+          files: android/V7-fix/app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
